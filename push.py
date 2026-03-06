@@ -24,7 +24,44 @@ def generate_sign():
     sign = urllib.parse.quote_plus(base64.b64encode(hmac_code))
     return timestamp, sign
 
-def send_to_dingtalk(title, content_list):
+def def send_to_dingtalk(title, content_list):
+    """发送到钉钉"""
+    if not content_list:
+        content_list = ["暂无新热点"]
+    
+    try:
+        timestamp, sign = generate_sign()
+        url = f"{WEBHOOK_URL}&timestamp={timestamp}&sign={sign}"
+        
+        markdown_text = f"## {title}\n\n"
+        for i, item in enumerate(content_list[:5], 1):
+            markdown_text += f"{i}. {item}\n\n"
+        
+        data = {
+            "msgtype": "markdown",
+            "markdown": {
+                "title": title,
+                "text": markdown_text
+            },
+            "at": {"isAtAll": False}
+        }
+        
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, headers=headers, data=json.dumps(data), timeout=10)
+        result = response.json()
+        
+        # 打印钉钉返回的完整结果
+        print(f"钉钉API返回: {result}")
+        
+        if result.get('errcode') == 0:
+            print(f"[{datetime.now()}] {title} 发送成功")
+        else:
+            print(f"[{datetime.now()}] {title} 发送失败，错误码: {result.get('errcode')}, 错误信息: {result.get('errmsg')}")
+        
+        return result
+    except Exception as e:
+        print(f"[错误] {title}: {e}")
+        return None(title, content_list):
     """发送到钉钉"""
     if not content_list:
         content_list = ["暂无新热点"]
